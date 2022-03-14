@@ -1,0 +1,30 @@
+{
+    "name": "wanakin/webcron",
+    "description": "A simple webcron and worker implementation for laravel",
+    "type": "package",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "WanaKin\\Webcron\\": "src/",
+            "Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "orchestra/testbench": "^7.1"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "WanaKin\\Webcron\\WebcronServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "dragonmantank/cron-expression": "^3.3"
+    },
+    "scripts": {
+        "test": [
+            "@php ./vendor/bin/phpunit"
+        ]
+    }
+}
