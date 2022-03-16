@@ -4,6 +4,9 @@ return [
     // Global timeout for scheduler and worker
     'lock_timeout' => env('WEBCRON_LOCK_TIMEOUT', '2 minutes'),
 
+    // Disable default routes
+    'routes' => env('WEBCRON_ROUTES', true),
+
     'scheduler' => [
         // Set to false to only use the worker
         'enabled' => env('WEBCRON_SCHEDULER', true),

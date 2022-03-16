@@ -1,12 +1,10 @@
 <?php
 
-namespace Tests;
+namespace Tests\Feature;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use WanaKin\Webcron\Facades\WebcronScheduler;
-use function any;
-use function anyArgs;
 
 class WebcronHttpTest extends TestCase
 {
@@ -38,6 +36,20 @@ class WebcronHttpTest extends TestCase
             ->once()
             ->with('webcron_scheduler_lock')
             ->andReturn(now()->subSeconds(15));
+
+        $this->mock(WebcronScheduler::getFacadeAccessor())
+            ->shouldNotReceive('dispatchScheduledJobs');
+
+        $this->get(route('cron'))
+            ->assertNoContent();
+    }
+
+    public function test_nothing_happens_when_disabled()
+    {
+        $this->app['config']->set('webcron.scheduler.enabled', false);
+
+        $this->mock(Cache::getStore()::class)
+            ->shouldNotReceive('get');
 
         $this->mock(WebcronScheduler::getFacadeAccessor())
             ->shouldNotReceive('dispatchScheduledJobs');

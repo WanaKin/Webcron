@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Tests\Feature;
 
 use Hamcrest\Util;
 use WanaKin\Webcron\WebcronServiceProvider;
@@ -19,7 +19,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
         $app['config']->set('database.default', 'testing');
         $app['config']->set('cache.driver', 'array');
 
-        $app['config']->set('webcron', include __DIR__ . '/../config/webcron.php');
+        $app['config']->set('webcron', include __DIR__ . '/../../config/webcron.php');
     }
 
     protected function getPackageProviders($app)

@@ -9,7 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class DummyJob implements ShouldQueue
+class UniqueDummyJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -21,5 +21,10 @@ class DummyJob implements ShouldQueue
     public function handle()
     {
         //
+    }
+
+    public function uniqueId(): string
+    {
+        return 'abc123';
     }
 }

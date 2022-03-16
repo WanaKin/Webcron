@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Tests\Feature;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -10,13 +10,7 @@ class WorkerHttpTest extends TestCase
 {
     public function test_calls_worker()
     {
-        $mock = \Mockery::mock();
-
-        $mock->shouldReceive('call')
-            ->once();
-
-        // The artisan facade doesn't support mocking as-is
-        Artisan::swap($mock);
+        Artisan::swap(\Mockery::mock()->shouldReceive('call')->getMock());
 
         Cache::shouldReceive('get')
             ->once()
@@ -42,11 +36,20 @@ class WorkerHttpTest extends TestCase
             ->with('webcron_worker_lock')
             ->andReturn(now());
 
-        $mock = \Mockery::mock();
+        Artisan::swap(\Mockery::mock()->shouldNotReceive('call')->getMock());
 
-        $mock->shouldNotReceive('call');
+        $this->get(route('worker'))
+            ->assertNoContent();
+    }
 
-        Artisan::swap($mock);
+    public function test_nothing_happens_when_disabled()
+    {
+        $this->app['config']->set('webcron.worker.enabled', false);
+
+        $this->mock(Cache::getStore()::class)
+            ->shouldNotReceive('get');
+
+        Artisan::swap(\Mockery::mock()->shouldNotReceive('call')->getMock());
 
         $this->get(route('worker'))
             ->assertNoContent();

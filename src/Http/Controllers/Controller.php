@@ -26,6 +26,11 @@ class Controller extends \Illuminate\Routing\Controller
      */
     protected function locked(string $key): bool
     {
+        // Always return true if disabled
+        if (!config("webcron.{$key}.enabled")) {
+            return true;
+        }
+
         /** @var ?Carbon */
         $lock = Cache::get($this->cacheKey($key));
 

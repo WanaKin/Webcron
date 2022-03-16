@@ -3,8 +3,11 @@
 namespace WanaKin\Webcron;
 
 use Cron\CronExpression;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use WanaKin\Webcron\Models\CronEvent;
 use function dispatch;
+use function is_callable;
+use function method_exists;
 
 class WebcronScheduler
 {
@@ -63,9 +66,20 @@ class WebcronScheduler
             $previousDate = $cron->getPreviousRunDate();
 
             foreach ($jobs as $job) {
+                $uniqueId = null;
+
+                // Allow setting a custom unique id
+                if ($job instanceof ShouldBeUnique) {
+                    $uniqueId = method_exists($job, 'uniqueId')
+                        ? $job->uniqueId()
+                        : ($job->uniqueId ?? null);
+                }
+
+                $uniqueId = md5($job::class . ':' . ($uniqueId ?? 'any'));
+
                 // Check if the job has already been dispatched since its last due date
                 $exists = CronEvent::query()
-                    ->where('job', $job::class)
+                    ->where('job', $uniqueId)
                     ->where('dispatched_at', '>=', $previousDate)
                     ->exists();
 
