@@ -2,6 +2,7 @@
 
 namespace WanaKin\Webcron\Http\Controllers;
 
+use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -19,49 +20,22 @@ class Controller extends \Illuminate\Routing\Controller
     }
 
     /**
-     * Check if a process is locked
+     * Lock a process if possible
      *
-     * @param  string $key
-     * @return bool
+     * @param string $key
+     * @return Lock|false
      */
-    protected function locked(string $key): bool
+    protected function lock(string $key): Lock|bool
     {
-        // Always return true if disabled
+        // Always fail if disabled
         if (!config("webcron.{$key}.enabled")) {
-            return true;
-        }
-
-        /** @var ?Carbon */
-        $lock = Cache::get($this->cacheKey($key));
-
-        $timeout = config("webcron.{$key}.lock_timeout") ?? config('webcron.lock_timeout');
-
-        if (!$lock || $lock->add($timeout)->lt(now())) {
             return false;
         }
 
-        return true;
-    }
+        $timeout = config("webcron.{$key}.lock_timeout") ?? config('webcron.lock_timeout');
 
-    /**
-     * Lock a resource
-     *
-     * @param string $key
-     * @return void
-     */
-    protected function lock(string $key): void
-    {
-        Cache::put($this->cacheKey($key), now());
-    }
+        $lock = Cache::lock($this->cacheKey($key), $timeout);
 
-    /**
-     * Unlock a resource
-     *
-     * @param  string $key
-     * @return void
-     */
-    protected function unlock(string $key): void
-    {
-        Cache::forget($this->cacheKey($key));
+        return $lock->get() ? $lock : false;
     }
 }

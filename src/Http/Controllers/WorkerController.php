@@ -19,14 +19,12 @@ class WorkerController extends Controller
     {
         ignore_user_abort(true);
 
-        if (!$this->locked('worker')) {
-            $this->lock('worker');
-
+        if ($lock = $this->lock('worker')) {
             Artisan::call('queue:work', [
                 '--max-time' => config('webcron.worker.max_time')
             ]);
 
-            $this->unlock('worker');
+            $lock->release();
         }
 
         return response(null, 204);

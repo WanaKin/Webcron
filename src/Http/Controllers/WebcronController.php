@@ -19,12 +19,10 @@ class WebcronController extends Controller
     {
         ignore_user_abort(true);
 
-        if (!$this->locked('scheduler')) {
-            $this->lock('scheduler');
-
+        if ($lock = $this->lock('scheduler')) {
             WebcronScheduler::dispatchScheduledJobs();
 
-            $this->unlock('scheduler');
+            $lock->release();
         }
 
         return response(null, 204);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use WanaKin\Webcron\Facades\WebcronScheduler;
@@ -13,18 +14,17 @@ class WebcronHttpTest extends TestCase
         WebcronScheduler::shouldReceive('dispatchScheduledJobs')
             ->once();
 
-        Cache::shouldReceive('get')
-            ->once()
-            ->with('webcron_scheduler_lock')
-            ->andReturnNull();
+        $lock = \Mockery::mock(Lock::class);
 
-        Cache::shouldReceive('put')
+        $lock->shouldReceive('get')
             ->once()
-            ->with('webcron_scheduler_lock', any(Carbon::class));
+            ->andReturnSelf();
 
-        Cache::shouldReceive('forget')
-            ->once()
-            ->with('webcron_scheduler_lock');
+        $lock->shouldReceive('release')
+            ->once();
+
+        Cache::shouldReceive('lock')
+            ->andReturn($lock);
 
         $this->get(route('cron'))
             ->assertNoContent();
@@ -32,10 +32,14 @@ class WebcronHttpTest extends TestCase
 
     public function test_does_not_run_twice_in_one_minute()
     {
-        Cache::shouldReceive('get')
+        $lock = $this->mock(Lock::class)
+            ->shouldReceive('get')
             ->once()
-            ->with('webcron_scheduler_lock')
-            ->andReturn(now()->subSeconds(15));
+            ->andReturnFalse()
+            ->getMock();
+
+        Cache::shouldReceive('lock')
+            ->andReturn($lock);
 
         $this->mock(WebcronScheduler::getFacadeAccessor())
             ->shouldNotReceive('dispatchScheduledJobs');
@@ -47,9 +51,6 @@ class WebcronHttpTest extends TestCase
     public function test_nothing_happens_when_disabled()
     {
         $this->app['config']->set('webcron.scheduler.enabled', false);
-
-        $this->mock(Cache::getStore()::class)
-            ->shouldNotReceive('get');
 
         $this->mock(WebcronScheduler::getFacadeAccessor())
             ->shouldNotReceive('dispatchScheduledJobs');
